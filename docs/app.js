@@ -149,7 +149,13 @@ async function init() {
   try {
     const response = await fetch('book/index.json'); if (!response.ok) throw new Error('目录加载失败');
     const book = await response.json(); chapters = book.chapters; $('total').textContent = `${chapters.length.toLocaleString()} 篇`;
-    const match = location.hash.match(/^#chapter=(\d+)$/); const id = match ? Number(match[1]) : state.chapter;
+    const editionChanged = saved.edition !== book.edition;
+    if (editionChanged) {
+      state.chapter = Number.isInteger(book.start) ? book.start : 0;
+      state.fraction = 0; state.anchor = null; state.bookmarks = [];
+    }
+    state.edition = book.edition;
+    const match = location.hash.match(/^#chapter=(\d+)$/); const id = match && !editionChanged ? Number(match[1]) : state.chapter;
     renderList(); await openChapter(id, id === state.chapter ? state.fraction : 0, id === state.chapter ? state.anchor : null);
   } catch { $('content').replaceChildren(); $('error').hidden = false; $('error-text').textContent = '书籍目录加载失败，请通过网站地址访问并检查网络连接。'; $('retry').onclick = init; }
 }
