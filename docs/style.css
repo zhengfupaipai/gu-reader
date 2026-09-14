@@ -33,3 +33,4 @@ body.focus-mode .main-shell{margin-left:0}body.focus-mode main{padding-top:42px}
 body.focus-mode #toast{left:50%}
 @media(max-width:1000px){main{max-width:calc(var(--font-size) * var(--reading-chars,32) + 60px)}}
 @media(max-width:760px){main{max-width:calc(var(--font-size) * var(--reading-chars,32) + 46px)}.toolbar{min-height:60px}#catalog{visibility:hidden}body.menu-open #catalog{visibility:visible}#exit-focus{bottom:calc(16px + env(safe-area-inset-bottom));right:16px}.sidebar-foot{padding:12px 0}#settings{width:min(320px,calc(100vw - 24px))}.chapter-kicker{letter-spacing:1px}.reading-status{padding-left:16px;padding-right:16px}}
+@media(min-width:761px){#catalog,.main-shell,.reading-status{transition:transform .2s ease,margin-left .2s ease,left .2s ease}body.sidebar-collapsed #catalog{transform:translateX(-100%)}body.sidebar-collapsed .main-shell{margin-left:0}body.sidebar-collapsed .reading-status{left:0}body.sidebar-collapsed #toast{left:50%}}

@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const KEY = 'gu-reader-v1';
-const CONTENT_VERSION = '4';
+const CONTENT_VERSION = '5';
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
 const clamp = (n, low, high) => Math.min(high, Math.max(low, n));
@@ -18,6 +18,7 @@ const state = {
   gap: clamp(Number(saved.gap) || 1.1, 0.5, 2),
   focus: saved.focus === true,
   rest: saved.rest === true,
+  sidebarCollapsed: saved.sidebarCollapsed === true,
   anchor: saved.anchor && Number.isInteger(saved.anchor.index) && Number.isFinite(saved.anchor.offset) ? saved.anchor : null,
   bookmarks: Array.isArray(saved.bookmarks) ? saved.bookmarks.filter(Number.isInteger) : [],
   collapsed: Array.isArray(saved.collapsed) ? saved.collapsed.filter(value => typeof value === 'string') : []
@@ -34,6 +35,7 @@ function applySettings() {
   document.documentElement.style.setProperty('--reading-chars', {narrow:26, medium:32, wide:38}[state.width]);
   document.documentElement.style.setProperty('--paragraph-gap', state.gap + 'em');
   document.body.classList.toggle('focus-mode', state.focus);
+  document.body.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
   $('exit-focus').hidden = !state.focus;
   $('focus-mode').setAttribute('aria-pressed', state.focus);
   $('focus-mode').textContent = state.focus ? '退出专注阅读' : '进入专注阅读';
@@ -43,6 +45,14 @@ function applySettings() {
   $('line-height').value = state.line; $('line-value').textContent = state.line.toFixed(1);
   document.querySelectorAll('.themes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.theme === state.theme));
   document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  updateCatalogButton();
+}
+function updateCatalogButton() {
+  const desktop = matchMedia('(min-width:761px)').matches;
+  const expanded = desktop ? !state.sidebarCollapsed : document.body.classList.contains('menu-open');
+  $('open-menu').setAttribute('aria-expanded', String(expanded));
+  $('open-menu').setAttribute('aria-label', desktop ? (expanded ? '收起目录' : '展开目录') : '打开目录');
+  $('open-menu').title = desktop ? (expanded ? '收起目录，让正文居中' : '展开目录') : '打开目录';
 }
 function renderList() {
   const query = $('search').value.trim().toLowerCase();
@@ -132,9 +142,18 @@ async function openChapter(id, fraction = 0, anchor = null) {
     $('retry').onclick = () => openChapter(id, fraction, anchor);
   }
 }
-function closeMenu() { document.body.classList.remove('menu-open'); $('scrim').hidden = true; $('open-menu').setAttribute('aria-expanded', 'false'); }
-$('open-menu').onclick = () => { document.body.classList.add('menu-open'); $('scrim').hidden = false; $('open-menu').setAttribute('aria-expanded', 'true'); $('search').focus(); $('chapter-list').querySelector('[aria-current="true"]')?.scrollIntoView({block:'center'}); };
+function closeMenu() { document.body.classList.remove('menu-open'); $('scrim').hidden = true; updateCatalogButton(); }
+$('open-menu').onclick = () => {
+  if (matchMedia('(min-width:761px)').matches) {
+    state.sidebarCollapsed = !state.sidebarCollapsed;
+    document.body.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+    updateCatalogButton(); persist();
+    return;
+  }
+  document.body.classList.add('menu-open'); $('scrim').hidden = false; updateCatalogButton(); $('search').focus(); $('chapter-list').querySelector('[aria-current="true"]')?.scrollIntoView({block:'center'});
+};
 $('close-menu').onclick = $('scrim').onclick = closeMenu;
+addEventListener('resize', updateCatalogButton);
 $('chapter-list').onclick = e => { const button = e.target.closest('button[data-id]'); if (button) openChapter(Number(button.dataset.id)); };
 $('search').oninput = renderList;
 function setTab(value) { bookmarksOnly = value; for (const [id, selected] of [['all-tab', !value], ['bookmarks-tab', value]]) { $(id).classList.toggle('selected', selected); $(id).setAttribute('aria-pressed', selected); } renderList(); }
