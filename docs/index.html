@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="green" data-typeface="sans">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c7edcc"><meta name="description" content="蛊真人 · 一卷天地，静心而读。适用于手机与电脑的小说阅读器。">
+  <title>蛊真人 · 静读</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside id="catalog" aria-label="章节目录">
+    <div class="brand"><span class="seal">蛊</span><div><strong>蛊真人</strong><small>一卷天地 · 静心而读</small></div><button id="close-menu" class="mobile icon" aria-label="关闭目录">×</button></div>
+    <div class="catalog-heading"><span>全书目录</span><span id="total">载入中</span></div>
+    <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索章节名称或序号" aria-label="搜索章节"></label>
+    <div class="catalog-tabs"><button id="all-tab" class="selected" aria-pressed="true">全部章节</button><button id="bookmarks-tab" aria-pressed="false">我的书签</button></div>
+    <nav id="chapter-list" aria-label="章节列表"></nav>
+    <div class="sidebar-foot"><span class="dot"></span> 阅读位置自动保存在此设备</div>
+  </aside>
+  <button id="scrim" aria-label="关闭目录" tabindex="-1" hidden></button>
+  <div class="main-shell">
+    <header class="toolbar"><div class="breadcrumb"><button id="open-menu" class="mobile icon" aria-label="打开目录">☰</button><span>蛊真人</span><span class="slash">/</span><span id="short-title">静读</span></div><div class="tools"><button id="bookmark" aria-label="添加书签" title="添加书签">☆ <span>书签</span></button><button id="settings-button" aria-label="阅读设置" aria-expanded="false">Aa <span>设置</span></button></div></header>
+    <section id="settings" aria-label="阅读设置" hidden>
+      <div><strong>阅读设置</strong><button id="close-settings" aria-label="关闭设置">×</button></div>
+      <label>字体 <select id="typeface"><option value="sans">黑体 · 清晰</option><option value="serif">宋体 · 书卷</option></select></label>
+      <label>字号 <input id="font-size" type="range" min="16" max="44" step="1"><output id="font-value"></output></label>
+      <label>行距 <input id="line-height" type="range" min="1.6" max="2.6" step="0.1"><output id="line-value"></output></label>
+      <label>段距 <input id="paragraph-gap" type="range" min="0.5" max="2" step="0.1"><output id="gap-value"></output></label>
+      <label>版心 <select id="reading-width"><option value="narrow">窄 · 约 26 字</option><option value="medium">中 · 约 32 字</option><option value="wide">宽 · 约 38 字</option></select></label>
+      <div class="themes"><button data-theme="green">豆沙绿</button><button data-theme="paper">纸色</button><button data-theme="light">明亮</button><button data-theme="dark">夜读</button></div>
+      <button id="focus-mode" class="setting-action" aria-pressed="false">进入专注阅读</button>
+      <label class="check-setting"><input id="rest-enabled" type="checkbox">每 20 分钟提醒休息</label>
+      <p>提醒仅在页面可见时计时，不会打断阅读。</p>
+      <p>电脑可用 ← / → 切换章节</p>
+    </section>
+    <main id="reading" tabindex="-1"><div class="chapter-kicker"><span id="chapter-number">静 读</span><span class="rule"></span><span id="word-count"></span></div><h1 id="title">一卷天地，静心而读。</h1><div class="chapter-meta">蛊真人 著 <span>·</span> <span id="reading-time">正在准备正文</span></div><div class="ornament" aria-hidden="true">◇</div><article id="content" aria-label="章节正文" aria-busy="true"><p>正在载入书籍……</p></article><div id="error" role="alert" hidden><p id="error-text"></p><button id="retry">重新加载</button></div><nav class="chapter-navigation" aria-label="翻章"><button id="previous">← 上一章</button><button id="to-top">回到章首 ↑</button><button id="next">下一章 →</button></nav><p class="endnote">合卷有余意，再读是故人。</p></main>
+    <footer class="reading-status"><span id="position">正在载入</span><span id="percent">本章 0%</span><div id="progress"></div></footer>
+  </div>
+  <button id="exit-focus" hidden>退出专注</button>
+  <aside id="rest-reminder" aria-label="休息提醒" hidden><p role="status">读了 20 分钟，看看约 6 米外至少 20 秒，也眨眨眼。</p><button id="dismiss-rest">知道了</button><button id="disable-rest">关闭提醒</button></aside>
+  <div id="toast" role="status"></div><script src="reading-clock.js" defer></script><script src="app.js" defer></script>
+</body></html>
