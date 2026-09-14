@@ -35,6 +35,14 @@ audit = []
 volumes = ['卷首']
 current_volume = '卷首'
 excluded = []
+VOLUME_NAMES = {
+    '第一卷': '第一卷 · 魔性不改',
+    '第二卷': '第二卷 · 魔子出山',
+    '第三卷': '第三卷 · 魔头乱世',
+    '第四卷': '第四卷 · 魔君纵横',
+    '第五卷': '第五卷 · 魔王雄霸',
+    '第六卷': '第六卷 · 魔尊永生',
+}
 with zipfile.ZipFile(source) as archive:
     container = ET.fromstring(archive.read('META-INF/container.xml'))
     package_path = container.find('.//{*}rootfile').attrib['full-path']
@@ -66,7 +74,7 @@ with zipfile.ZipFile(source) as archive:
             excluded.append(title)
             continue
         if re.fullmatch(r'第[一二三四五六]卷', compact_title):
-            current_volume = compact_title
+            current_volume = VOLUME_NAMES[compact_title]
             if current_volume not in volumes:
                 volumes.append(current_volume)
             excluded.append(title)
@@ -86,7 +94,7 @@ with zipfile.ZipFile(source) as archive:
 source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
 start = next((chapter['id'] for chapter in chapters if chapter['title'].startswith('第一节')), 0)
 (output / 'index.json').write_text(json.dumps({
-    'title': '蛊真人', 'edition': source_sha256 + ':catalog-v2', 'start': start,
+    'title': '蛊真人', 'edition': source_sha256 + ':catalog-v3', 'start': start,
     'volumes': volumes, 'chapters': chapters
 }, ensure_ascii=False), encoding='utf-8')
 print(f'Extracted {len(chapters)} entries; {sum(c["words"] for c in chapters):,} characters.')

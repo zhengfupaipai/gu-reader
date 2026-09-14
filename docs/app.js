@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const KEY = 'gu-reader-v1';
-const CONTENT_VERSION = '3';
+const CONTENT_VERSION = '4';
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
 const clamp = (n, low, high) => Math.min(high, Math.max(low, n));
@@ -160,7 +160,18 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && state.focus) toggle
 let scrollTimer;
 addEventListener('scroll', () => { updateProgress(); clearTimeout(scrollTimer); scrollTimer = setTimeout(() => { if (ready) persist(); }, 250); }, {passive:true});
 addEventListener('pagehide', () => { if (ready) { updateProgress(); persist(); } });
-addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenu(); settingsOpen(false); } if (!ready || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.altKey || e.ctrlKey || e.metaKey || document.body.classList.contains('menu-open') || !$('settings').hidden) return; if (e.key === 'ArrowLeft' && current > 0) { e.preventDefault(); openChapter(current - 1); } if (e.key === 'ArrowRight' && current < chapters.length - 1) { e.preventDefault(); openChapter(current + 1); } });
+function keyboardPage(direction) {
+  const atStart = scrollY <= 8, atEnd = scrollY >= maxScroll() - 8;
+  if (direction < 0 && atStart && current > 0) { openChapter(current - 1, 1); return; }
+  if (direction > 0 && atEnd && current < chapters.length - 1) { openChapter(current + 1); return; }
+  window.scrollBy({top: direction * Math.max(260, innerHeight * .82), behavior: 'smooth'});
+}
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeMenu(); settingsOpen(false); }
+  if (!ready || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.altKey || e.ctrlKey || e.metaKey || document.body.classList.contains('menu-open') || !$('settings').hidden) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); keyboardPage(e.key === 'ArrowLeft' ? -1 : 1); }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); window.scrollBy({top: (e.key === 'ArrowUp' ? -1 : 1) * Math.max(80, innerHeight * .18), behavior:'smooth'}); }
+});
 addEventListener('hashchange', () => { const match = location.hash.match(/^#chapter=(\d+)$/); if (match) openChapter(Number(match[1])); });
 async function init() {
   applySettings();
