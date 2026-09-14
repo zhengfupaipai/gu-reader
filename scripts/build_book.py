@@ -3,6 +3,7 @@ import json
 import pathlib
 import posixpath
 import argparse
+import re
 import xml.etree.ElementTree as ET
 import zipfile
 import hashlib
@@ -31,6 +32,9 @@ for old_json in output.glob('*.json'):
     old_json.unlink()
 chapters = []
 audit = []
+volumes = ['卷首']
+current_volume = '卷首'
+excluded = []
 with zipfile.ZipFile(source) as archive:
     container = ET.fromstring(archive.read('META-INF/container.xml'))
     package_path = container.find('.//{*}rootfile').attrib['full-path']
@@ -57,6 +61,16 @@ with zipfile.ZipFile(source) as archive:
             heading = doc.find('.//{*}title')
         title = ''.join(heading.itertext()).strip() if heading is not None else ''
         title = title or toc_titles.get(path) or item['id']
+        compact_title = re.sub(r'\s+', '', title)
+        if compact_title in {'封面', '制作说明', '版权信息'}:
+            excluded.append(title)
+            continue
+        if re.fullmatch(r'第[一二三四五六]卷', compact_title):
+            current_volume = compact_title
+            if current_volume not in volumes:
+                volumes.append(current_volume)
+            excluded.append(title)
+            continue
         paragraphs = [''.join(p.itertext()).strip() for p in doc.findall('.//{*}body//{*}p')]
         source_labels = [''.join(e.itertext()).strip() for e in doc.findall('.//{*}body//{*}blockquote')]
         paragraphs, changes = clean_paragraphs(paragraphs, title)
@@ -68,16 +82,18 @@ with zipfile.ZipFile(source) as archive:
         index = len(chapters)
         data = {'title': title, 'paragraphs': paragraphs}
         (output / f'{index}.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-        chapters.append({'id': index, 'title': title, 'words': sum(len(p) for p in paragraphs)})
+        chapters.append({'id': index, 'title': title, 'words': sum(len(p) for p in paragraphs), 'volume': current_volume})
 source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
 start = next((chapter['id'] for chapter in chapters if chapter['title'].startswith('第一节')), 0)
 (output / 'index.json').write_text(json.dumps({
-    'title': '蛊真人', 'edition': source_sha256, 'start': start, 'chapters': chapters
+    'title': '蛊真人', 'edition': source_sha256 + ':catalog-v2', 'start': start,
+    'volumes': volumes, 'chapters': chapters
 }, ensure_ascii=False), encoding='utf-8')
 print(f'Extracted {len(chapters)} entries; {sum(c["words"] for c in chapters):,} characters.')
 report = ROOT / 'reports'
 report.mkdir(exist_ok=True)
 summary = {'source_sha256': source_sha256, 'source_file': source.name, 'entries': len(chapters),
+           'excluded_entries': excluded,
            'affected_entries': len(audit), 'changed_paragraphs_or_labels': sum(len(a['changes']) for a in audit),
            'removed_characters': sum(len(c['before']) - len(c['after']) for a in audit for c in a['changes'])}
 (report / 'cleaning-audit.json').write_text(json.dumps({'summary': summary, 'chapters': audit}, ensure_ascii=False, indent=2), encoding='utf-8')

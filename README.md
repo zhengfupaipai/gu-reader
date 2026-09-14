@@ -8,7 +8,7 @@
 
 ## 更新书籍
 
-原始 EPUB 放在项目根目录，运行 `python scripts/build_book.py "EPUB文件名.epub"`。省略文件名时会选取项目根目录中最近修改的 EPUB。脚本按照 EPUB spine 顺序提取正文与目录至 `docs/book`，构建前会删除旧章节文件，避免换书后残留。当前 EPUB 含卷首信息、序言和章节共 2,345 篇。使用 `scripts/clean_text.py` 中经过核实的规则清除来源链接、下载广告、网站水印和残留标记，保留小说正文和作者附言，不加载书内脚本或外部资源。每次构建会生成 `reports/cleaning-audit.json`，记录源文件名、原文件 SHA-256 及逐段清理前后对照。原始 EPUB 不修改，已从 Git 中忽略，生成的正文数据包含在网站内。
+原始 EPUB 放在项目根目录，运行 `python scripts/build_book.py "EPUB文件名.epub"`。省略文件名时会选取项目根目录中最近修改的 EPUB。脚本按照 EPUB spine 顺序提取正文与目录至 `docs/book`，构建前会删除旧章节文件，避免换书后残留。构建时排除封面、制作说明、版权信息和单独的卷标题，将正文按卷首及第一至第六卷分组。当前网站共有 2,336 篇可读内容。使用 `scripts/clean_text.py` 中经过核实的规则清除来源链接、下载广告、网站水印和残留标记，保留小说正文和作者附言，不加载书内脚本或外部资源。每次构建会生成 `reports/cleaning-audit.json`，记录源文件名、原文件 SHA-256 及逐段清理前后对照。原始 EPUB 不修改，已从 Git 中忽略，生成的正文数据包含在网站内。
 
 ## GitHub Pages
 

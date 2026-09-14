@@ -2,7 +2,18 @@
   "summary": {
     "source_sha256": "8f16887f532440f4d00eac7b869f8cc380e682cb4632a03b912153c2c4a72bb4",
     "source_file": "蛊epub格式文件.epub",
-    "entries": 2345,
+    "entries": 2336,
+    "excluded_entries": [
+      "封面",
+      "制作说明",
+      "版权信息",
+      "第一卷",
+      "第二卷",
+      "第三卷",
+      "第四卷",
+      "第五卷",
+      "第六卷"
+    ],
     "affected_entries": 0,
     "changed_paragraphs_or_labels": 0,
     "removed_characters": 0

@@ -4,7 +4,7 @@ const KEY = 'gu-reader-v1';
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
 const clamp = (n, low, high) => Math.min(high, Math.max(low, n));
-let chapters = [], current = -1, request = 0, ready = false, bookmarksOnly = false, toastTimer;
+let chapters = [], volumes = [], current = -1, request = 0, ready = false, bookmarksOnly = false, toastTimer;
 const state = {
   chapter: Number.isInteger(saved.chapter) ? saved.chapter : 2,
   fraction: Number.isFinite(saved.fraction) ? clamp(saved.fraction, 0, 1) : 0,
@@ -18,7 +18,8 @@ const state = {
   focus: saved.focus === true,
   rest: saved.rest === true,
   anchor: saved.anchor && Number.isInteger(saved.anchor.index) && Number.isFinite(saved.anchor.offset) ? saved.anchor : null,
-  bookmarks: Array.isArray(saved.bookmarks) ? saved.bookmarks.filter(Number.isInteger) : []
+  bookmarks: Array.isArray(saved.bookmarks) ? saved.bookmarks.filter(Number.isInteger) : [],
+  collapsed: Array.isArray(saved.collapsed) ? saved.collapsed.filter(value => typeof value === 'string') : []
 };
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { toast('浏览器无法保存进度，请检查存储设置'); } }
 function toast(message) { $('toast').textContent = message; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2400); }
@@ -46,11 +47,27 @@ function renderList() {
   const query = $('search').value.trim().toLowerCase();
   const list = chapters.filter(c => (!bookmarksOnly || state.bookmarks.includes(c.id)) && (!query || c.title.toLowerCase().includes(query) || String(c.id + 1) === query));
   const fragment = document.createDocumentFragment();
-  for (const c of list) {
-    const button = document.createElement('button'); button.dataset.id = c.id; button.setAttribute('aria-current', String(c.id === current));
-    const num = document.createElement('span'); num.className = 'num'; num.textContent = String(c.id + 1).padStart(3, '0');
-    const title = document.createElement('span'); title.textContent = c.title;
-    button.append(num, title); fragment.append(button);
+  for (const volume of volumes) {
+    const items = list.filter(chapter => chapter.volume === volume);
+    if (!items.length) continue;
+    const group = document.createElement('details'); group.className = 'volume-group'; group.dataset.volume = volume;
+    group.open = query || bookmarksOnly || !state.collapsed.includes(volume);
+    const summary = document.createElement('summary');
+    const name = document.createElement('span'); name.textContent = volume;
+    const count = document.createElement('span'); count.className = 'volume-count'; count.textContent = `${items.length} 篇`;
+    summary.append(name, count); group.append(summary);
+    for (const c of items) {
+      const button = document.createElement('button'); button.dataset.id = c.id; button.setAttribute('aria-current', String(c.id === current));
+      const num = document.createElement('span'); num.className = 'num'; num.textContent = String(c.id + 1).padStart(3, '0');
+      const title = document.createElement('span'); title.textContent = c.title;
+      button.append(num, title); group.append(button);
+    }
+    group.ontoggle = () => {
+      if (query || bookmarksOnly) return;
+      state.collapsed = group.open ? state.collapsed.filter(item => item !== volume) : [...new Set([...state.collapsed, volume])];
+      persist();
+    };
+    fragment.append(group);
   }
   $('chapter-list').replaceChildren(fragment);
   if (!list.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = bookmarksOnly ? '还没有符合条件的书签。点击正文右上角的星标即可收藏。' : '没有找到章节，试试其他关键词。'; $('chapter-list').append(p); }
@@ -148,11 +165,13 @@ async function init() {
   applySettings();
   try {
     const response = await fetch('book/index.json'); if (!response.ok) throw new Error('目录加载失败');
-    const book = await response.json(); chapters = book.chapters; $('total').textContent = `${chapters.length.toLocaleString()} 篇`;
+    const book = await response.json(); chapters = book.chapters; volumes = book.volumes || [...new Set(chapters.map(chapter => chapter.volume || '全书'))]; $('total').textContent = `${chapters.length.toLocaleString()} 篇`;
     const editionChanged = saved.edition !== book.edition;
     if (editionChanged) {
       state.chapter = Number.isInteger(book.start) ? book.start : 0;
       state.fraction = 0; state.anchor = null; state.bookmarks = [];
+      const startVolume = chapters.find(chapter => chapter.id === state.chapter)?.volume;
+      state.collapsed = volumes.filter(volume => volume !== startVolume);
     }
     state.edition = book.edition;
     const match = location.hash.match(/^#chapter=(\d+)$/); const id = match && !editionChanged ? Number(match[1]) : state.chapter;
