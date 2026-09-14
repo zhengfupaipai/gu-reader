@@ -1,6 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const KEY = 'gu-reader-v1';
+const CONTENT_VERSION = '3';
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
 const clamp = (n, low, high) => Math.min(high, Math.max(low, n));
@@ -108,7 +109,7 @@ async function openChapter(id, fraction = 0, anchor = null) {
   $('previous').disabled = $('next').disabled = $('bookmark').disabled = true;
   closeMenu();
   try {
-    const response = await fetch(`book/${id}.json`); if (!response.ok) throw new Error('加载失败');
+    const response = await fetch(`book/${id}.json?v=${CONTENT_VERSION}`); if (!response.ok) throw new Error('加载失败');
     const data = await response.json(); if (token !== request) return;
     current = id; state.chapter = id;
     $('title').textContent = data.title; $('short-title').textContent = data.title;
@@ -164,7 +165,7 @@ addEventListener('hashchange', () => { const match = location.hash.match(/^#chap
 async function init() {
   applySettings();
   try {
-    const response = await fetch('book/index.json'); if (!response.ok) throw new Error('目录加载失败');
+    const response = await fetch(`book/index.json?v=${CONTENT_VERSION}`); if (!response.ok) throw new Error('目录加载失败');
     const book = await response.json(); chapters = book.chapters; volumes = book.volumes || [...new Set(chapters.map(chapter => chapter.volume || '全书'))]; $('total').textContent = `${chapters.length.toLocaleString()} 篇`;
     const editionChanged = saved.edition !== book.edition;
     if (editionChanged) {
